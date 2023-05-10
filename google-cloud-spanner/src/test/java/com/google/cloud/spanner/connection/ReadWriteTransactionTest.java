@@ -171,6 +171,7 @@ public class ReadWriteTransactionTest {
     return ReadWriteTransaction.newBuilder()
         .setDatabaseClient(client)
         .setRetryAbortsInternally(withRetry)
+        .setSavepointSupport(SavepointSupport.FAIL_AFTER_ROLLBACK)
         .setTransactionRetryListeners(Collections.emptyList())
         .withStatementExecutor(new StatementExecutor())
         .build();
@@ -463,6 +464,7 @@ public class ReadWriteTransactionTest {
       ReadWriteTransaction subject =
           ReadWriteTransaction.newBuilder()
               .setRetryAbortsInternally(true)
+              .setSavepointSupport(SavepointSupport.FAIL_AFTER_ROLLBACK)
               .setTransactionRetryListeners(Collections.emptyList())
               .setDatabaseClient(client)
               .withStatementExecutor(new StatementExecutor())
@@ -490,6 +492,7 @@ public class ReadWriteTransactionTest {
     ReadWriteTransaction transaction =
         ReadWriteTransaction.newBuilder()
             .setRetryAbortsInternally(true)
+            .setSavepointSupport(SavepointSupport.FAIL_AFTER_ROLLBACK)
             .setTransactionRetryListeners(Collections.emptyList())
             .setDatabaseClient(client)
             .withStatementExecutor(new StatementExecutor())
@@ -719,6 +722,7 @@ public class ReadWriteTransactionTest {
     ReadWriteTransaction transaction =
         ReadWriteTransaction.newBuilder()
             .setRetryAbortsInternally(true)
+            .setSavepointSupport(SavepointSupport.FAIL_AFTER_ROLLBACK)
             .setTransactionRetryListeners(Collections.emptyList())
             .setDatabaseClient(client)
             .withStatementExecutor(new StatementExecutor())

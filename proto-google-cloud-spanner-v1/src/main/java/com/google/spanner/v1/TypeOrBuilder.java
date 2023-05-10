@@ -160,12 +160,28 @@ public interface TypeOrBuilder
   com.google.spanner.v1.TypeAnnotationCode getTypeAnnotation();
 
   /**
+   *
+   *
+   * <pre>
+   * If [code][] == [PROTO][TypeCode.PROTO] or [code][] ==
+   * [ENUM][TypeCode.ENUM], then `proto_type_fqn` is the fully qualified name of
+   * the proto type representing the proto/enum definition.
+   * </pre>
+   *
    * <code>string proto_type_fqn = 5;</code>
    *
    * @return The protoTypeFqn.
    */
   java.lang.String getProtoTypeFqn();
   /**
+   *
+   *
+   * <pre>
+   * If [code][] == [PROTO][TypeCode.PROTO] or [code][] ==
+   * [ENUM][TypeCode.ENUM], then `proto_type_fqn` is the fully qualified name of
+   * the proto type representing the proto/enum definition.
+   * </pre>
+   *
    * <code>string proto_type_fqn = 5;</code>
    *
    * @return The bytes for protoTypeFqn.

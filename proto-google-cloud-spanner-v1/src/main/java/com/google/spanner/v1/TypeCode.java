@@ -177,9 +177,26 @@ public enum TypeCode implements com.google.protobuf.ProtocolMessageEnum {
    * <code>JSON = 11;</code>
    */
   JSON(11),
-  /** <code>PROTO = 13;</code> */
+  /**
+   *
+   *
+   * <pre>
+   * Encoded as a base64-encoded `string`, as described in RFC 4648,
+   * section 4.
+   * </pre>
+   *
+   * <code>PROTO = 13;</code>
+   */
   PROTO(13),
-  /** <code>ENUM = 14;</code> */
+  /**
+   *
+   *
+   * <pre>
+   * Encoded as `string`, in decimal format.
+   * </pre>
+   *
+   * <code>ENUM = 14;</code>
+   */
   ENUM(14),
   UNRECOGNIZED(-1),
   ;
@@ -328,9 +345,26 @@ public enum TypeCode implements com.google.protobuf.ProtocolMessageEnum {
    * <code>JSON = 11;</code>
    */
   public static final int JSON_VALUE = 11;
-  /** <code>PROTO = 13;</code> */
+  /**
+   *
+   *
+   * <pre>
+   * Encoded as a base64-encoded `string`, as described in RFC 4648,
+   * section 4.
+   * </pre>
+   *
+   * <code>PROTO = 13;</code>
+   */
   public static final int PROTO_VALUE = 13;
-  /** <code>ENUM = 14;</code> */
+  /**
+   *
+   *
+   * <pre>
+   * Encoded as `string`, in decimal format.
+   * </pre>
+   *
+   * <code>ENUM = 14;</code>
+   */
   public static final int ENUM_VALUE = 14;
 
   public final int getNumber() {
