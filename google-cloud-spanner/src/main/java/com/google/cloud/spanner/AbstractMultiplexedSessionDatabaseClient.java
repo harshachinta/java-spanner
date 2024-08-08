@@ -46,12 +46,6 @@ abstract class AbstractMultiplexedSessionDatabaseClient implements DatabaseClien
   }
 
   @Override
-  public CommitResponse writeWithOptions(Iterable<Mutation> mutations, TransactionOption... options)
-      throws SpannerException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public Timestamp writeAtLeastOnce(Iterable<Mutation> mutations) throws SpannerException {
     throw new UnsupportedOperationException();
   }
@@ -66,11 +60,6 @@ abstract class AbstractMultiplexedSessionDatabaseClient implements DatabaseClien
   public ServerStream<BatchWriteResponse> batchWriteAtLeastOnce(
       Iterable<MutationGroup> mutationGroups, TransactionOption... options)
       throws SpannerException {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public TransactionRunner readWriteTransaction(TransactionOption... options) {
     throw new UnsupportedOperationException();
   }
 

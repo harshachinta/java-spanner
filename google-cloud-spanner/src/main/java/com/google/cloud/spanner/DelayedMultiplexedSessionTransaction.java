@@ -22,6 +22,7 @@ import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutures;
 import com.google.cloud.spanner.DelayedReadContext.DelayedReadOnlyTransaction;
 import com.google.cloud.spanner.MultiplexedSessionDatabaseClient.MultiplexedSessionTransaction;
+import com.google.cloud.spanner.Options.TransactionOption;
 import com.google.common.util.concurrent.MoreExecutors;
 
 /**
@@ -46,6 +47,24 @@ class DelayedMultiplexedSessionTransaction extends AbstractMultiplexedSessionDat
     this.client = client;
     this.span = span;
     this.sessionFuture = sessionFuture;
+  }
+
+  @Override
+  public CommitResponse writeWithOptions(Iterable<Mutation> mutations, TransactionOption... options)
+      throws SpannerException {
+    /*return ApiFutures.transform(
+        this.sessionFuture,
+        sessionReference ->
+            new MultiplexedSessionTransaction(
+                client, span, sessionReference, NO_CHANNEL_HINT, false)
+                .writeWithOptions(mutations, options),
+        MoreExecutors.directExecutor()).get();*/
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public TransactionRunner readWriteTransaction(TransactionOption... options) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

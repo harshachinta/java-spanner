@@ -31,6 +31,7 @@ import com.google.cloud.spanner.Options.UpdateOption;
 import com.google.cloud.spanner.SessionClient.SessionOption;
 import com.google.cloud.spanner.TransactionRunnerImpl.TransactionContextImpl;
 import com.google.cloud.spanner.spi.v1.SpannerRpc;
+import com.google.cloud.spanner.spi.v1.SpannerRpc.Option;
 import com.google.common.base.Ticker;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -412,7 +413,7 @@ class SessionImpl implements Session {
     }
   }
 
-  ApiFuture<ByteString> beginTransactionAsync(Options transactionOptions, boolean routeToLeader) {
+  ApiFuture<ByteString> beginTransactionAsync(Options transactionOptions, boolean routeToLeader, Map<Option, ?> transactionChannelHint) {
     final SettableApiFuture<ByteString> res = SettableApiFuture.create();
     final ISpan span = tracer.spanBuilder(SpannerImpl.BEGIN_TRANSACTION);
     final BeginTransactionRequest request =
@@ -422,7 +423,7 @@ class SessionImpl implements Session {
             .build();
     final ApiFuture<Transaction> requestFuture;
     try (IScope ignore = tracer.withSpan(span)) {
-      requestFuture = spanner.getRpc().beginTransactionAsync(request, getOptions(), routeToLeader);
+      requestFuture = spanner.getRpc().beginTransactionAsync(request, transactionChannelHint, routeToLeader);
     }
     requestFuture.addListener(
         () -> {

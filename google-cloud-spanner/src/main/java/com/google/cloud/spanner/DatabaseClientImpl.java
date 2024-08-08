@@ -33,29 +33,32 @@ class DatabaseClientImpl implements DatabaseClient {
   private static final String READ_ONLY_TRANSACTION = "CloudSpanner.ReadOnlyTransaction";
   private static final String PARTITION_DML_TRANSACTION = "CloudSpanner.PartitionDMLTransaction";
   private final TraceWrapper tracer;
+  private final boolean useMultiplexedSession;
   @VisibleForTesting final String clientId;
   @VisibleForTesting final SessionPool pool;
   @VisibleForTesting final MultiplexedSessionDatabaseClient multiplexedSessionDatabaseClient;
 
   @VisibleForTesting
   DatabaseClientImpl(SessionPool pool, TraceWrapper tracer) {
-    this("", pool, /* multiplexedSessionDatabaseClient = */ null, tracer);
+    this("", pool, /* multiplexedSessionDatabaseClient = */ null, tracer, false);
   }
 
   @VisibleForTesting
   DatabaseClientImpl(String clientId, SessionPool pool, TraceWrapper tracer) {
-    this(clientId, pool, /* multiplexedSessionDatabaseClient = */ null, tracer);
+    this(clientId, pool, /* multiplexedSessionDatabaseClient = */ null, tracer, false);
   }
 
   DatabaseClientImpl(
       String clientId,
       SessionPool pool,
       @Nullable MultiplexedSessionDatabaseClient multiplexedSessionDatabaseClient,
-      TraceWrapper tracer) {
+      TraceWrapper tracer,
+      boolean useMultiplexedSession) {
     this.clientId = clientId;
     this.pool = pool;
     this.multiplexedSessionDatabaseClient = multiplexedSessionDatabaseClient;
     this.tracer = tracer;
+    this.useMultiplexedSession = useMultiplexedSession;
   }
 
   @VisibleForTesting
@@ -94,6 +97,9 @@ class DatabaseClientImpl implements DatabaseClient {
       throws SpannerException {
     ISpan span = tracer.spanBuilder(READ_WRITE_TRANSACTION, options);
     try (IScope s = tracer.withSpan(span)) {
+      if(this.useMultiplexedSession) {
+        return getMultiplexedSession().writeWithOptions(mutations, options);
+      }
       return runWithSessionRetry(session -> session.writeWithOptions(mutations, options));
     } catch (RuntimeException e) {
       span.setStatus(e);
@@ -215,7 +221,7 @@ class DatabaseClientImpl implements DatabaseClient {
   public TransactionRunner readWriteTransaction(TransactionOption... options) {
     ISpan span = tracer.spanBuilder(READ_WRITE_TRANSACTION, options);
     try (IScope s = tracer.withSpan(span)) {
-      return getSession().readWriteTransaction(options);
+      return getMultiplexedSession().readWriteTransaction(options);
     } catch (RuntimeException e) {
       span.setStatus(e);
       span.end();

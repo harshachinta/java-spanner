@@ -312,7 +312,7 @@ class SpannerImpl extends BaseService<SpannerOptions> implements Spanner {
       String clientId,
       SessionPool pool,
       @Nullable MultiplexedSessionDatabaseClient multiplexedSessionClient) {
-    return new DatabaseClientImpl(clientId, pool, multiplexedSessionClient, tracer);
+    return new DatabaseClientImpl(clientId, pool, multiplexedSessionClient, tracer, getOptions().getSessionPoolOptions().getUseMultiplexedSession());
   }
 
   @Override
