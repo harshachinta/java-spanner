@@ -30,4 +30,10 @@ public class SessionPoolOptionsHelper {
       SessionPoolOptions.Builder sessionPoolOptionsBuilder, boolean useMultiplexedSession) {
     return sessionPoolOptionsBuilder.setUseMultiplexedSession(useMultiplexedSession);
   }
+
+  // TODO: Remove when Builder.setUseMultiplexedSession(..) has been made public.
+  public static SessionPoolOptions.Builder setUseMultiplexedSessionForRW(
+      SessionPoolOptions.Builder sessionPoolOptionsBuilder, boolean useMultiplexedSession) {
+    return sessionPoolOptionsBuilder.setUseMultiplexedSessionForRW(useMultiplexedSession);
+  }
 }

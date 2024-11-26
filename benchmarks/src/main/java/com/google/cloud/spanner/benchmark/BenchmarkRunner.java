@@ -23,7 +23,8 @@ public interface BenchmarkRunner {
   enum TransactionType {
     READ_ONLY_SINGLE_USE,
     READ_ONLY_MULTI_USE,
-    READ_WRITE
+    READ_WRITE,
+    READ_WRITE_MUTATION_ONLY
   }
 
   List<Duration> execute(

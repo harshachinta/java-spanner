@@ -17,9 +17,11 @@
 package com.google.cloud.spanner.benchmark;
 
 import com.google.cloud.opentelemetry.metric.GoogleCloudMetricExporter;
+import com.google.cloud.opentelemetry.trace.TraceConfiguration;
 import com.google.cloud.opentelemetry.trace.TraceExporter;
 import com.google.cloud.spanner.DatabaseClient;
 import com.google.cloud.spanner.DatabaseId;
+import com.google.cloud.spanner.Mutation;
 import com.google.cloud.spanner.ReadOnlyTransaction;
 import com.google.cloud.spanner.ResultSet;
 import com.google.cloud.spanner.SessionPoolOptions;
@@ -34,6 +36,8 @@ import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
 import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator;
+import io.opentelemetry.context.propagation.ContextPropagators;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
@@ -46,6 +50,7 @@ import io.opentelemetry.sdk.trace.samplers.Sampler;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -69,7 +74,12 @@ class JavaClientRunner extends AbstractRunner {
       boolean useMultiplexedSession) {
     // setup open telemetry metrics and traces
     // setup open telemetry metrics and traces
-    SpanExporter traceExporter = TraceExporter.createWithDefaultConfiguration();
+    SpanExporter traceExporter =
+        TraceExporter.createWithConfiguration(
+            TraceConfiguration.builder()
+                .setProjectId(databaseId.getInstanceId().getProject())
+                .setTraceServiceEndpoint("staging-cloudtrace.sandbox.googleapis.com:443")
+                .build());
     SdkTracerProvider tracerProvider =
         SdkTracerProvider.builder()
             .addSpanProcessor(BatchSpanProcessor.builder(traceExporter).build())
@@ -90,19 +100,25 @@ class JavaClientRunner extends AbstractRunner {
         OpenTelemetrySdk.builder()
             .setMeterProvider(sdkMeterProvider)
             .setTracerProvider(tracerProvider)
-            .build();
-    SessionPoolOptions sessionPoolOptions =
-        SessionPoolOptionsHelper.setUseMultiplexedSession(
-                SessionPoolOptions.newBuilder(), useMultiplexedSession)
-            .build();
+            .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+            .buildAndRegisterGlobal();
+    // GrpcOpenTelemetry.newBuilder().build().registerGlobal();
+    SessionPoolOptions.Builder poolOptionsBuilder =
+        com.google.cloud.spanner.SessionPoolOptions.newBuilder();
+    SessionPoolOptionsHelper.setUseMultiplexedSession(poolOptionsBuilder, useMultiplexedSession);
+    SessionPoolOptionsHelper.setUseMultiplexedSessionForRW(
+        poolOptionsBuilder, useMultiplexedSession);
+    SessionPoolOptions sessionPoolOptions = poolOptionsBuilder.build();
     SpannerOptions.enableOpenTelemetryMetrics();
     SpannerOptions.enableOpenTelemetryTraces();
     SpannerOptions options =
         SpannerOptions.newBuilder()
-            .setOpenTelemetry(openTelemetry)
+            // .setOpenTelemetry(openTelemetry)
             .setProjectId(databaseId.getInstanceId().getProject())
             .setSessionPoolOption(sessionPoolOptions)
             .setHost(SERVER_URL)
+            .setEnableEndToEndTracing(/* enableEndtoEndTracing= */ true)
+            .setEnableApiTracing(true)
             .build();
     // Register query stats metric.
     // This should be done once before start recording the data.
@@ -170,6 +186,9 @@ class JavaClientRunner extends AbstractRunner {
       case READ_WRITE:
         executeReadWriteTransaction(client);
         break;
+      case READ_WRITE_MUTATION_ONLY:
+        executeMutationOnlyTxn(client);
+        break;
     }
     Duration elapsedTime = watch.elapsed();
     endToEndLatencies.record(elapsedTime.toMillis());
@@ -222,6 +241,30 @@ class JavaClientRunner extends AbstractRunner {
     client
         .readWriteTransaction()
         .run(transaction -> transaction.executeUpdate(getRandomisedUpdateStatement()));
+  }
+
+  private void executeMutationOnlyTxn(DatabaseClient client) {
+    int[] keyIds = new int[3];
+    for (int i = 0; i < 3; i++) {
+      keyIds[i] = new Random().nextInt(100000);
+    }
+    client
+        .readWriteTransaction()
+        .run(
+            transaction -> {
+              for (int i = 0; i < 3; i++) {
+                transaction.buffer(
+                    Mutation.newUpdateBuilder("FOO")
+                        .set("id")
+                        .to(keyIds[i])
+                        .set("BAZ")
+                        .to(2)
+                        .set("BAR")
+                        .to(1)
+                        .build());
+              }
+              return null;
+            });
   }
 
   static Statement getRandomisedReadStatement() {
