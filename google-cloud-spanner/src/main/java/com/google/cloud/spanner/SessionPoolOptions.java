@@ -853,7 +853,7 @@ public class SessionPoolOptions {
      * SessionPoolOptions#maxSessions} based on the traffic load. Failing to do so will result in
      * higher latencies.
      */
-    Builder setUseMultiplexedSession(boolean useMultiplexedSession) {
+    public Builder setUseMultiplexedSession(boolean useMultiplexedSession) {
       this.useMultiplexedSession = useMultiplexedSession;
       return this;
     }
@@ -864,7 +864,7 @@ public class SessionPoolOptions {
      */
     @InternalApi
     @VisibleForTesting
-    Builder setUseMultiplexedSessionForRW(boolean useMultiplexedSessionForRW) {
+    public Builder setUseMultiplexedSessionForRW(boolean useMultiplexedSessionForRW) {
       this.useMultiplexedSessionForRW = useMultiplexedSessionForRW;
       return this;
     }

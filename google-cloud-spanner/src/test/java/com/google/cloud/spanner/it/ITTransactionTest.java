@@ -470,6 +470,11 @@ public class ITTransactionTest {
         .allowNestedTransaction()
         .run(
             transaction -> {
+              // To avoid empty transaction body for multiplexed sessions.
+              ResultSet rs = transaction.executeQuery(Statement.of("SELECT 1"));
+              while (rs.next()) {
+                // Do nothing.
+              }
               client.singleUseReadOnlyTransaction();
 
               return null;

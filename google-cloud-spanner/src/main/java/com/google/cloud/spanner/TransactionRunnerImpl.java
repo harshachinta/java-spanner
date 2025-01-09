@@ -222,6 +222,8 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
 
     private final Map<SpannerRpc.Option, ?> channelHint;
 
+    private com.google.spanner.v1.Mutation randomlySelectedMutation;
+
     private TransactionContextImpl(Builder builder) {
       super(builder);
       this.transactionId = builder.transactionId;
@@ -276,9 +278,9 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
       }
     }
 
-    void ensureTxn() {
+    void ensureTxn(com.google.spanner.v1.Mutation randomMutation) {
       try {
-        ensureTxnAsync().get();
+        ensureTxnAsync(randomMutation).get();
       } catch (ExecutionException e) {
         throw SpannerExceptionFactory.newSpannerException(e.getCause() == null ? e : e.getCause());
       } catch (InterruptedException e) {
@@ -286,10 +288,10 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
       }
     }
 
-    ApiFuture<Void> ensureTxnAsync() {
+    ApiFuture<Void> ensureTxnAsync(com.google.spanner.v1.Mutation randomMutation) {
       final SettableApiFuture<Void> res = SettableApiFuture.create();
       if (transactionId == null || isAborted()) {
-        createTxnAsync(res, null);
+        createTxnAsync(res, randomMutation);
       } else {
         span.addAnnotation("Transaction Initialized", "Id", transactionId.toStringUtf8());
         txnLogger.log(
@@ -402,6 +404,7 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
       synchronized (lock) {
         if (transactionIdFuture == null && transactionId == null && runningAsyncOperations == 0) {
           finishOps = SettableApiFuture.create();
+          randomlySelectedMutation = randomMutation;
           createTxnAsync(finishOps, randomMutation);
         } else {
           finishOps = finishedAsyncOperations;
@@ -1226,6 +1229,7 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
     Callable<T> retryCallable =
         () -> {
           boolean useInlinedBegin = true;
+          com.google.spanner.v1.Mutation randomMutation = null;
           if (attempt.get() > 0) {
             // Do not inline the BeginTransaction during a retry if the initial attempt did not
             // actually start a transaction.
@@ -1238,6 +1242,7 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
               // transactionId.
               multiplexedSessionPreviousTransactionId =
                   txn.transactionId != null ? txn.transactionId : txn.getPreviousTransactionId();
+              randomMutation = txn.randomlySelectedMutation;
             }
 
             txn =
@@ -1251,7 +1256,7 @@ class TransactionRunnerImpl implements SessionTransaction, TransactionRunner {
           // Only ensure that there is a transaction if we should not inline the beginTransaction
           // with the first statement.
           if (!useInlinedBegin) {
-            txn.ensureTxn();
+            txn.ensureTxn(randomMutation);
           }
 
           T result;
